@@ -1,6 +1,10 @@
 import fs from 'node:fs/promises'
 import express from 'express'
 import { Transform } from 'node:stream'
+import path from 'node:path'
+import dotenv from "dotenv";
+
+dotenv.config();
 
 
 // Constants
@@ -10,9 +14,17 @@ const base = process.env.BASE || '/'
 const ABORT_DELAY = 10000
 
 // Cached production assets
-const templateHtml = isProduction
-  ? await fs.readFile('./dist/client/index.html', 'utf-8')
-  : ''
+const indexPath = path.join(process.cwd(), 'dist/client/index.html')
+let templateHtml = ''
+if (isProduction) {
+  try {
+    templateHtml = await fs.readFile(indexPath, 'utf-8')
+  } catch (err) {
+    // If the file isn't present at build time, log and keep templateHtml empty.
+    console.error('Could not read dist client index.html at', indexPath, err && err.message)
+    templateHtml = ''
+  }
+}
 
 // Create http server
 const app = express()
